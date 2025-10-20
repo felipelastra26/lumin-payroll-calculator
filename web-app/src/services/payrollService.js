@@ -141,37 +141,24 @@ function calculateWeeklyPay(employee, transactions, hours, payPeriod) {
  * Get employee hours from timecard data
  */
 function getEmployeeHours(employee, timecardData, payPeriod) {
-  // Parse timecard Excel data
-  // For now, return mock data - this will be replaced with actual Excel parsing
+  if (!timecardData || !timecardData.employees) {
+    return {
+      week1: { hours: 0, days: [] },
+      week2: { hours: 0, days: [] }
+    };
+  }
   
   const { startDate, endDate } = payPeriod;
   const midDate = new Date(startDate);
   midDate.setDate(midDate.getDate() + 7);
   
-  // TODO: Parse actual timecard Excel file
-  // This is a placeholder that returns mock hours
-  
-  return {
-    week1: { hours: 40, days: [] },
-    week2: { hours: 40, days: [] }
-  };
+  // Import the getEmployeeHours function from timecardParser
+  const { getEmployeeHours: getHours } = require('./timecardParser');
+  return getHours(timecardData, employee.fullName || employee.name, new Date(startDate), new Date(endDate));
 }
 
-/**
- * Parse timecard Excel file
- */
-export async function parseTimecardFile(file) {
-  // TODO: Implement Excel parsing using a library like xlsx
-  // For now, return mock data
-  
-  return {
-    employees: [],
-    payPeriod: {
-      startDate: new Date(),
-      endDate: new Date()
-    }
-  };
-}
+// Re-export from timecardParser
+export { parseTimecardFile, getEmployeeHours } from './timecardParser';
 
 export default {
   calculatePayroll,
