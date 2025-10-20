@@ -3,37 +3,38 @@ import Icon from '../../../components/AppIcon';
 
 const PayrollMetrics = ({ metrics }) => {
   const formatCurrency = (amount) => {
+    const numAmount = Number(amount) || 0;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
-    })?.format(amount);
+    })?.format(numAmount);
   };
 
   const metricCards = [
     {
       label: 'Total Commission',
-      value: formatCurrency(metrics?.totalCommission),
+      value: formatCurrency(metrics?.totalCommission || 0),
       icon: 'TrendingUp',
       color: 'text-success',
       bgColor: 'bg-success/10'
     },
     {
       label: 'Total Hourly',
-      value: formatCurrency(metrics?.totalHourly),
+      value: formatCurrency(metrics?.totalHourly || 0),
       icon: 'Clock',
       color: 'text-primary',
       bgColor: 'bg-primary/10'
     },
     {
       label: 'Total Tips',
-      value: formatCurrency(metrics?.totalTips),
+      value: formatCurrency(metrics?.totalTips || 0),
       icon: 'Heart',
       color: 'text-warning',
       bgColor: 'bg-warning/10'
     },
     {
       label: 'Total Addings',
-      value: formatCurrency(metrics?.totalAddings),
+      value: formatCurrency(metrics?.totalAddings || 0),
       icon: 'Plus',
       color: 'text-accent',
       bgColor: 'bg-accent/10'

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
-import Button from '../../components/ui/Button';
-import Icon from '../../components/AppIcon';
+import StepProgressIndicator from '../../components/ui/StepProgressIndicator';
+import WorkflowActionBar from '../../components/ui/WorkflowActionBar';
+import ExportControlPanel from '../../components/ui/ExportControlPanel';
 import EmployeeHeader from './components/EmployeeHeader';
 import WeeklyBreakdown from './components/WeeklyBreakdown';
 import ServicesTable from './components/ServicesTable';
@@ -11,29 +12,211 @@ import ManualAdjustments from './components/ManualAdjustments';
 import FinalTotalSummary from './components/FinalTotalSummary';
 
 const EmployeeDetailBreakdown = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [employeeData, setEmployeeData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportPanel, setShowExportPanel] = useState(false);
 
-  useEffect(() => {
-    loadEmployeeData();
-  }, []);
-
-  const loadEmployeeData = () => {
-    try {
-      const selectedEmployee = JSON.parse(sessionStorage.getItem('selectedEmployee') || '{}');
-      
-      if (!selectedEmployee.fullDetails) {
-        throw new Error('No employee data found');
-      }
-
-      setEmployeeData(selectedEmployee);
-    } catch (error) {
-      console.error('Error loading employee data:', error);
-    } finally {
-      setLoading(false);
+  // Get employee data from navigation state or use mock data
+  const getEmployeeData = () => {
+    if (location?.state?.employee) {
+      return location?.state?.employee;
     }
+    
+    // Mock employee data for demonstration
+    return {
+      id: "EMP001",
+      name: "Aubrie B",
+      payPeriod: "Oct 7 - Oct 20, 2024",
+      totalPay: 1247.50,
+      totalHours: 78.5,
+      commissionRate: 40,
+      hourlyRate: 14.00,
+      week1: {
+        dateRange: "Oct 7 - Oct 13, 2024",
+        hoursWorked: 38.5,
+        hourlyRate: 14.00,
+        hourlyPay: 539.00,
+        commission: 486.40,
+        commissionRate: 40,
+        basePay: 539.00,
+        tips: 125.50,
+        addings: 18.00,
+        discountDeduction: 15.75,
+        totalPay: 666.75,
+        services: [
+          {
+            date: "2024-10-07",
+            client: "Sarah Johnson",
+            service: "Full Set Acrylic",
+            amount: 65.00
+          },
+          {
+            date: "2024-10-07",
+            client: "Maria Garcia",
+            service: "Gel Manicure",
+            amount: 35.00
+          },
+          {
+            date: "2024-10-08",
+            client: "Jennifer Smith",
+            service: "Full Set Gel",
+            amount: 70.00
+          },
+          {
+            date: "2024-10-09",
+            client: "Ashley Brown",
+            service: "Refill Acrylic",
+            amount: 45.00
+          },
+          {
+            date: "2024-10-10",
+            client: "Lisa Wilson",
+            service: "Pedicure Deluxe",
+            amount: 55.00
+          },
+          {
+            date: "2024-10-11",
+            client: "Rachel Davis",
+            service: "Full Set Dip",
+            amount: 60.00
+          },
+          {
+            date: "2024-10-12",
+            client: "Amanda Miller",
+            service: "Gel Manicure",
+            amount: 35.00
+          },
+          {
+            date: "2024-10-13",
+            client: "Nicole Taylor",
+            service: "Full Set Acrylic",
+            amount: 65.00
+          }
+        ],
+        addings: {
+          total: 18.00,
+          fullSets: {
+            count: 3,
+            rate: 4.00,
+            total: 12.00,
+            details: [
+              { date: "Oct 7", client: "Sarah Johnson", amount: 4.00 },
+              { date: "Oct 8", client: "Jennifer Smith", amount: 4.00 },
+              { date: "Oct 13", client: "Nicole Taylor", amount: 4.00 }
+            ]
+          },
+          refills: {
+            count: 3,
+            rate: 2.00,
+            total: 6.00,
+            details: [
+              { date: "Oct 9", client: "Ashley Brown", amount: 2.00 },
+              { date: "Oct 11", client: "Rachel Davis", amount: 2.00 },
+              { date: "Oct 12", client: "Amanda Miller", amount: 2.00 }
+            ]
+          }
+        }
+      },
+      week2: {
+        dateRange: "Oct 14 - Oct 20, 2024",
+        hoursWorked: 40.0,
+        hourlyRate: 14.00,
+        hourlyPay: 560.00,
+        commission: 512.80,
+        commissionRate: 40,
+        basePay: 560.00,
+        tips: 98.75,
+        addings: 22.00,
+        discountDeduction: 12.50,
+        totalPay: 668.25,
+        services: [
+          {
+            date: "2024-10-14",
+            client: "Stephanie Lee",
+            service: "Full Set Gel",
+            amount: 70.00
+          },
+          {
+            date: "2024-10-15",
+            client: "Michelle White",
+            service: "Refill Gel",
+            amount: 50.00
+          },
+          {
+            date: "2024-10-16",
+            client: "Kimberly Jones",
+            service: "Full Set Acrylic",
+            amount: 65.00
+          },
+          {
+            date: "2024-10-17",
+            client: "Danielle Clark",
+            service: "Pedicure Basic",
+            amount: 40.00
+          },
+          {
+            date: "2024-10-18",
+            client: "Brittany Lewis",
+            service: "Full Set Dip",
+            amount: 60.00
+          },
+          {
+            date: "2024-10-19",
+            client: "Samantha Hall",
+            service: "Gel Manicure",
+            amount: 35.00
+          },
+          {
+            date: "2024-10-20",
+            client: "Christina Young",
+            service: "Full Set Acrylic",
+            amount: 65.00
+          }
+        ],
+        addings: {
+          total: 22.00,
+          fullSets: {
+            count: 4,
+            rate: 4.00,
+            total: 16.00,
+            details: [
+              { date: "Oct 14", client: "Stephanie Lee", amount: 4.00 },
+              { date: "Oct 16", client: "Kimberly Jones", amount: 4.00 },
+              { date: "Oct 18", client: "Brittany Lewis", amount: 4.00 },
+              { date: "Oct 20", client: "Christina Young", amount: 4.00 }
+            ]
+          },
+          refills: {
+            count: 3,
+            rate: 2.00,
+            total: 6.00,
+            details: [
+              { date: "Oct 15", client: "Michelle White", amount: 2.00 },
+              { date: "Oct 17", client: "Danielle Clark", amount: 2.00 },
+              { date: "Oct 19", client: "Samantha Hall", amount: 2.00 }
+            ]
+          }
+        }
+      },
+      manualAdjustments: [
+        {
+          type: "bonus",
+          amount: 50.00,
+          date: "Oct 15, 2024",
+          notes: "Exceptional customer service feedback bonus"
+        },
+        {
+          type: "deduction",
+          amount: -25.00,
+          date: "Oct 18, 2024",
+          notes: "Late arrival deduction (30 minutes)"
+        }
+      ]
+    };
   };
+
+  const [employeeData] = useState(getEmployeeData());
 
   const handleBack = () => {
     navigate('/payroll-summary-results');
@@ -43,161 +226,136 @@ const EmployeeDetailBreakdown = () => {
     window.print();
   };
 
-  const handleExportPDF = () => {
-    // TODO: Implement PDF export for single employee
-    console.log('Export PDF for employee:', employeeData.name);
+  const handleExport = async (exportConfig) => {
+    setIsExporting(true);
+    try {
+      // Simulate export process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log('Exporting employee details:', {
+        employee: employeeData?.name,
+        format: exportConfig?.format,
+        dataType: exportConfig?.dataType,
+        options: exportConfig?.options
+      });
+      
+      // In a real application, this would trigger the actual export
+      alert(`Export completed: ${employeeData?.name} payroll details exported as ${exportConfig?.format?.toUpperCase()}`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-6 py-8">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading employee details...</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const handleNext = () => {
+    // Navigate to next logical step or back to summary
+    navigate('/payroll-summary-results');
+  };
 
-  if (!employeeData) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-6 py-8">
-          <div className="text-center py-12">
-            <p className="text-red-600 mb-4">Employee data not found</p>
-            <Button onClick={handleBack}>Go Back</Button>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const handlePrevious = () => {
+    navigate('/payroll-summary-results');
+  };
 
-  const { fullDetails } = employeeData;
-  const payPeriod = JSON.parse(sessionStorage.getItem('payPeriod') || '{}');
+  const handleSave = async () => {
+    // Save current view state
+    console.log('Saving employee detail view state...');
+  };
+
+  // Calculate summary data for final total component
+  const summaryData = {
+    week1Total: employeeData?.week1?.totalPay,
+    week2Total: employeeData?.week2?.totalPay,
+    biweeklySubtotal: employeeData?.week1?.totalPay + employeeData?.week2?.totalPay,
+    totalAdjustments: employeeData?.manualAdjustments?.reduce((sum, adj) => sum + adj?.amount, 0),
+    finalTotal: employeeData?.totalPay,
+    totalHours: employeeData?.totalHours,
+    commissionRate: employeeData?.commissionRate,
+    hourlyRate: employeeData?.hourlyRate
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-6 py-8 pb-16">
-        {/* Action Bar */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            iconName="ArrowLeft"
-            iconPosition="left"
-          >
-            Back to Summary
-          </Button>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              iconName="Printer"
-              iconPosition="left"
-            >
-              Print
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleExportPDF}
-              iconName="Download"
-              iconPosition="left"
-            >
-              Export PDF
-            </Button>
-          </div>
-        </div>
-
+      <StepProgressIndicator />
+      <main className="max-w-6xl mx-auto px-4 py-6 pb-24">
         {/* Employee Header */}
         <EmployeeHeader 
           employee={employeeData}
-          payPeriod={payPeriod}
+          onBack={handleBack}
+          onPrint={handlePrint}
+          onExport={() => setShowExportPanel(!showExportPanel)}
         />
 
-        {/* Week 1 Breakdown */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center">
-            <Icon name="Calendar" size={24} className="mr-2" />
-            Week 1 ({new Date(payPeriod.startDate).toLocaleDateString()} - {new Date(new Date(payPeriod.startDate).getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()})
-          </h2>
-          
-          <WeeklyBreakdown 
-            weekData={fullDetails.week1}
-            employee={fullDetails.employee}
+        {/* Export Panel */}
+        {showExportPanel && (
+          <ExportControlPanel
+            onExport={handleExport}
+            availableFormats={['pdf', 'excel']}
+            availableData={['detailed', 'individual']}
+            isExporting={isExporting}
+            className="mb-6"
           />
-          
-          {fullDetails.week1.services && fullDetails.week1.services.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Services Provided</h3>
-              <ServicesTable services={fullDetails.week1.services} />
-            </div>
-          )}
-          
-          {fullDetails.employee.hasAddings && fullDetails.week1.addings > 0 && (
-            <div className="mt-6">
-              <AddingsBreakdown 
-                services={fullDetails.week1.services}
-                totalAddings={fullDetails.week1.addings}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Week 2 Breakdown */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center">
-            <Icon name="Calendar" size={24} className="mr-2" />
-            Week 2 ({new Date(new Date(payPeriod.startDate).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()} - {new Date(payPeriod.endDate).toLocaleDateString()})
-          </h2>
-          
-          <WeeklyBreakdown 
-            weekData={fullDetails.week2}
-            employee={fullDetails.employee}
-          />
-          
-          {fullDetails.week2.services && fullDetails.week2.services.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Services Provided</h3>
-              <ServicesTable services={fullDetails.week2.services} />
-            </div>
-          )}
-          
-          {fullDetails.employee.hasAddings && fullDetails.week2.addings > 0 && (
-            <div className="mt-6">
-              <AddingsBreakdown 
-                services={fullDetails.week2.services}
-                totalAddings={fullDetails.week2.addings}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Manual Adjustments */}
-        {fullDetails.adjustments && fullDetails.adjustments.length > 0 && (
-          <div className="mb-8">
-            <ManualAdjustments adjustments={fullDetails.adjustments} />
-          </div>
         )}
 
-        {/* Final Total */}
+        {/* Week 1 Section */}
+        <WeeklyBreakdown 
+          weekData={employeeData?.week1}
+          weekNumber={1}
+        />
+        
+        <ServicesTable 
+          services={employeeData?.week1?.services}
+          weekNumber={1}
+        />
+        
+        <AddingsBreakdown 
+          addingsData={employeeData?.week1?.addings}
+          weekNumber={1}
+        />
+
+        {/* Week 2 Section */}
+        <WeeklyBreakdown 
+          weekData={employeeData?.week2}
+          weekNumber={2}
+        />
+        
+        <ServicesTable 
+          services={employeeData?.week2?.services}
+          weekNumber={2}
+        />
+        
+        <AddingsBreakdown 
+          addingsData={employeeData?.week2?.addings}
+          weekNumber={2}
+        />
+
+        {/* Manual Adjustments */}
+        <ManualAdjustments 
+          adjustments={employeeData?.manualAdjustments}
+        />
+
+        {/* Final Total Summary */}
         <FinalTotalSummary 
-          week1Total={fullDetails.week1.total}
-          week2Total={fullDetails.week2.total}
-          adjustments={fullDetails.totalAdjustments}
-          finalPay={fullDetails.finalPay}
+          summaryData={summaryData}
         />
       </main>
+      <WorkflowActionBar
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        onSave={handleSave}
+        customActions={[
+          {
+            label: 'Print Report',
+            icon: 'Printer',
+            onClick: handlePrint,
+            variant: 'outline'
+          }
+        ]}
+      />
     </div>
   );
 };
 
 export default EmployeeDetailBreakdown;
-

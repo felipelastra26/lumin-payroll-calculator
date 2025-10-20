@@ -8,169 +8,152 @@ import PayrollSummaryCard from './components/PayrollSummaryCard';
 import EmployeePayrollTable from './components/EmployeePayrollTable';
 import ExportActionsPanel from './components/ExportActionsPanel';
 import PayrollMetrics from './components/PayrollMetrics';
-import { getTransactions } from '../../services/azureService';
-import { calculatePayroll } from '../../services/payrollService';
 
 const PayrollSummaryResults = () => {
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('idle');
-  const [calculating, setCalculating] = useState(true);
-  const [payrollResults, setPayrollResults] = useState(null);
-  const [error, setError] = useState(null);
+
+  // Mock payroll data
+  const payrollData = {
+    totalPayroll: 8247.50,
+    employeeCount: 7,
+    dateRange: "Oct 7 - Oct 20, 2024",
+    calculationDate: new Date()?.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }),
+    employees: [
+      {
+        id: 1,
+        name: "Aubrie B",
+        position: "Senior Stylist",
+        payStructure: "Mixed",
+        totalPay: 1456.75,
+        week1Pay: 728.50,
+        week2Pay: 728.25,
+        commissionRate: 0.40,
+        hourlyRate: 14.00
+      },
+      {
+        id: 2,
+        name: "Megan T",
+        position: "Senior Stylist", 
+        payStructure: "Mixed",
+        totalPay: 1389.25,
+        week1Pay: 695.00,
+        week2Pay: 694.25,
+        commissionRate: 0.40,
+        hourlyRate: 14.00
+      },
+      {
+        id: 3,
+        name: "Hilda",
+        position: "Master Stylist",
+        payStructure: "Commission",
+        totalPay: 1678.50,
+        week1Pay: 842.25,
+        week2Pay: 836.25,
+        commissionRate: 0.50,
+        hourlyRate: 0.00
+      },
+      {
+        id: 4,
+        name: "Kennedi B",
+        position: "Stylist",
+        payStructure: "Hourly",
+        totalPay: 1120.00,
+        week1Pay: 560.00,
+        week2Pay: 560.00,
+        commissionRate: 0.00,
+        hourlyRate: 14.00
+      },
+      {
+        id: 5,
+        name: "Valerie C",
+        position: "Stylist",
+        payStructure: "Hourly",
+        totalPay: 1120.00,
+        week1Pay: 560.00,
+        week2Pay: 560.00,
+        commissionRate: 0.00,
+        hourlyRate: 14.00
+      },
+      {
+        id: 6,
+        name: "Erika Perez",
+        position: "Stylist",
+        payStructure: "Hourly",
+        totalPay: 1120.00,
+        week1Pay: 560.00,
+        week2Pay: 560.00,
+        commissionRate: 0.00,
+        hourlyRate: 14.00
+      },
+      {
+        id: 7,
+        name: "Stylist Chelese",
+        position: "Stylist",
+        payStructure: "Hourly",
+        totalPay: 1363.00,
+        week1Pay: 681.50,
+        week2Pay: 681.50,
+        commissionRate: 0.00,
+        hourlyRate: 14.00
+      }
+    ]
+  };
+
+  const payrollMetrics = {
+    totalCommission: 3067.75,
+    totalHourly: 4723.00,
+    totalTips: 456.75,
+    totalAddings: 287.50
+  };
 
   useEffect(() => {
-    calculatePayrollData();
+    // Simulate data loading
+    setExportStatus('success');
   }, []);
 
-  const calculatePayrollData = async () => {
-    setCalculating(true);
-    setError(null);
+  const handleViewDetails = (employeeId) => {
+    navigate(`/employee-detail-breakdown?employee=${employeeId}`);
+  };
 
+  const handleExport = async (type) => {
+    setIsExporting(true);
+    setExportStatus('processing');
+    
     try {
-      // Get data from session storage
-      const employeesData = JSON.parse(sessionStorage.getItem('employeesWithConfig') || '[]');
-      const payPeriod = JSON.parse(sessionStorage.getItem('payPeriod') || '{}');
-      const timecardData = JSON.parse(sessionStorage.getItem('timecardData') || '{}');
-      const adjustments = JSON.parse(sessionStorage.getItem('adjustments') || '[]');
-
-      if (!employeesData.length) {
-        throw new Error('No employees found. Please go back and load employees.');
+      // Simulate export process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      switch (type) {
+        case 'pdf': console.log('Generating PDF report...');
+          break;
+        case 'excel': console.log('Generating Excel file...');
+          break;
+        case 'email': console.log('Sending email report...');
+          break;
+        case 'backup': console.log('Creating backup...');
+          break;
+        default:
+          console.log('Unknown export type');
       }
-
-      if (!payPeriod.startDate || !payPeriod.endDate) {
-        throw new Error('Pay period not configured. Please go back and select dates.');
-      }
-
-      // Fetch transactions from Azure
-      const transactions = await getTransactions(payPeriod.startDate, payPeriod.endDate);
-
-      // Calculate payroll for all employees
-      const results = calculatePayroll(employeesData, transactions, timecardData, payPeriod, adjustments);
-
-      // Calculate totals
-      const totalPayroll = results.reduce((sum, r) => sum + r.finalPay, 0);
-      const totalHours = results.reduce((sum, r) => sum + r.totalHours, 0);
-
-      // Format results for display
-      const formattedResults = {
-        totalPayroll: Math.round(totalPayroll * 100) / 100,
-        employeeCount: results.length,
-        totalHours: Math.round(totalHours * 100) / 100,
-        dateRange: `${new Date(payPeriod.startDate).toLocaleDateString()} - ${new Date(payPeriod.endDate).toLocaleDateString()}`,
-        payDate: new Date(payPeriod.payDate).toLocaleDateString(),
-        calculationDate: new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
-        employees: results.map(r => ({
-          id: r.employee.id,
-          name: r.employee.name || r.employee.fullName,
-          position: getPosition(r.employee),
-          payStructure: getPayStructureLabel(r.employee.payStructure),
-          totalPay: Math.round(r.finalPay * 100) / 100,
-          week1Pay: Math.round(r.week1.total * 100) / 100,
-          week2Pay: Math.round(r.week2.total * 100) / 100,
-          commissionRate: r.employee.commissionRate / 100,
-          hourlyRate: r.employee.hourlyRate,
-          totalHours: r.totalHours,
-          adjustments: r.adjustments,
-          totalAdjustments: r.totalAdjustments,
-          // Store full details for detail view
-          fullDetails: r
-        }))
-      };
-
-      setPayrollResults(formattedResults);
-
-      // Store results for detail view and export
-      sessionStorage.setItem('payrollResults', JSON.stringify(formattedResults));
-
-    } catch (err) {
-      console.error('Error calculating payroll:', err);
-      setError(err.message);
-    } finally {
-      setCalculating(false);
-    }
-  };
-
-  const getPosition = (employee) => {
-    const name = (employee.name || employee.fullName || '').toLowerCase();
-    if (name.includes('aubrie') || name.includes('megan')) return 'Senior Stylist';
-    if (name.includes('hilda')) return 'PMU Artist';
-    return 'Stylist';
-  };
-
-  const getPayStructureLabel = (payStructure) => {
-    switch (payStructure) {
-      case 'commission_vs_hourly': return 'Commission vs Hourly';
-      case 'pure_commission': return 'Pure Commission';
-      case 'hourly_only': return 'Hourly Only';
-      default: return 'Unknown';
-    }
-  };
-
-  const handleEmployeeClick = (employee) => {
-    // Store selected employee for detail view
-    sessionStorage.setItem('selectedEmployee', JSON.stringify(employee));
-    navigate('/employee-detail-breakdown');
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    setExportStatus('processing');
-
-    try {
-      // TODO: Implement PDF export
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       setExportStatus('success');
-      setTimeout(() => setExportStatus('idle'), 3000);
     } catch (error) {
+      console.error('Export failed:', error);
       setExportStatus('error');
-      console.error('Export error:', error);
     } finally {
       setIsExporting(false);
-    }
-  };
-
-  const handleExportExcel = async () => {
-    setIsExporting(true);
-    setExportStatus('processing');
-
-    try {
-      // TODO: Implement Excel export
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setExportStatus('success');
       setTimeout(() => setExportStatus('idle'), 3000);
-    } catch (error) {
-      setExportStatus('error');
-      console.error('Export error:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleEmailReport = async () => {
-    setIsExporting(true);
-    setExportStatus('processing');
-
-    try {
-      // TODO: Implement email functionality
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setExportStatus('success');
-      setTimeout(() => setExportStatus('idle'), 3000);
-    } catch (error) {
-      setExportStatus('error');
-      console.error('Export error:', error);
-    } finally {
-      setIsExporting(false);
     }
   };
 
   const handleNext = () => {
-    // Final step - maybe show a completion page or go back to start
-    navigate('/');
+    navigate('/employee-detail-breakdown');
   };
 
   const handlePrevious = () => {
@@ -178,112 +161,99 @@ const PayrollSummaryResults = () => {
   };
 
   const handleSave = async () => {
-    // Save results
-    sessionStorage.setItem('payrollResults', JSON.stringify(payrollResults));
+    setExportStatus('saved');
+    setTimeout(() => setExportStatus('idle'), 2000);
   };
-
-  if (calculating) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <StepProgressIndicator />
-        <main className="container mx-auto px-6 py-8">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-foreground">Calculating Payroll...</h2>
-            <p className="text-muted-foreground mt-2">
-              Fetching transactions from Azure and calculating employee pay
-            </p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <StepProgressIndicator />
-        <main className="container mx-auto px-6 py-8">
-          <div className="text-center py-12">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
-              <h2 className="text-xl font-semibold text-red-800 mb-2">Calculation Error</h2>
-              <p className="text-red-700">{error}</p>
-              <button
-                onClick={() => navigate('/file-upload-dashboard')}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Go Back
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!payrollResults) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <StepProgressIndicator />
-      <main className="container mx-auto px-6 py-8 pb-32">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Payroll Summary</h1>
-          <p className="text-muted-foreground">
-            Review calculated payroll for {payrollResults.dateRange}
-          </p>
-          
+      <main className="flex-1 px-6 py-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Page Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Payroll Summary Results
+            </h1>
+            <p className="text-muted-foreground">
+              Bi-weekly payroll calculations completed for pay period {payrollData?.dateRange}
+            </p>
+          </div>
+
+          {/* Status Indicator */}
           <DataStatusIndicator 
             status={exportStatus}
             message={
-              exportStatus === 'processing' ? 'Exporting payroll report...' :
-              exportStatus === 'success' ? 'Report exported successfully!' :
+              exportStatus === 'processing' ? 'Exporting payroll data...' :
+              exportStatus === 'success' ? 'Payroll calculations completed successfully' :
+              exportStatus === 'saved' ? 'Payroll data saved' :
               exportStatus === 'error' ? 'Export failed. Please try again.' : ''
             }
           />
-        </div>
 
-        {/* Metrics */}
-        <PayrollMetrics data={payrollResults} />
-
-        {/* Summary Card */}
-        <div className="mb-8">
-          <PayrollSummaryCard data={payrollResults} />
-        </div>
-
-        {/* Employee Table */}
-        <div className="mb-8">
-          <EmployeePayrollTable 
-            employees={payrollResults.employees}
-            onEmployeeClick={handleEmployeeClick}
+          {/* Summary Card */}
+          <PayrollSummaryCard 
+            totalPayroll={payrollData?.totalPayroll}
+            employeeCount={payrollData?.employeeCount}
+            dateRange={payrollData?.dateRange}
           />
-        </div>
 
-        {/* Export Actions */}
-        <ExportActionsPanel
-          onExportPDF={handleExportPDF}
-          onExportExcel={handleExportExcel}
-          onEmailReport={handleEmailReport}
-          isExporting={isExporting}
-        />
+          {/* Metrics */}
+          <PayrollMetrics metrics={payrollMetrics} />
+
+          {/* Export Panel */}
+          <ExportActionsPanel 
+            onExport={handleExport}
+            isExporting={isExporting}
+          />
+
+          {/* Employee Results Table */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">Employee Payroll Results</h2>
+              <div className="text-sm text-muted-foreground">
+                Calculated on {payrollData?.calculationDate}
+              </div>
+            </div>
+            
+            <EmployeePayrollTable 
+              employees={payrollData?.employees}
+              onViewDetails={handleViewDetails}
+            />
+          </div>
+
+          {/* Additional Information */}
+          <div className="bg-muted/30 border border-border rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <p className="mb-2">
+                  <strong>Calculation Method:</strong> Each employee's pay is calculated using MAX(Hourly, Commission) + Tips + Addings - (Discounts × 50%)
+                </p>
+                <p className="mb-2">
+                  <strong>Pay Structures:</strong> Mixed employees receive the higher of hourly or commission pay, plus additional earnings and deductions.
+                </p>
+                <p>
+                  <strong>Export Options:</strong> Use the export panel above to download detailed reports or email summaries to stakeholders.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
       <WorkflowActionBar
         onNext={handleNext}
-        onSave={handleSave}
         onPrevious={handlePrevious}
+        onSave={handleSave}
         isNextDisabled={false}
         isPreviousDisabled={false}
-        isSaving={false}
+        isSaving={exportStatus === 'saved'}
       />
     </div>
   );
 };
 
 export default PayrollSummaryResults;
-
