@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// import { PayrollProvider } from './contexts/PayrollContext';
 import FileUploadDashboard from './pages/file-upload-dashboard';
 import PayrollSummaryResults from './pages/payroll-summary-results';
 import EmployeeDetailBreakdown from './pages/employee-detail-breakdown';
@@ -9,7 +10,8 @@ import NotFound from './pages/NotFound';
 
 function App() {
   return (
-    <BrowserRouter>
+    // <PayrollProvider>
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<FileUploadDashboard />} />
         <Route path="/payroll-summary-results" element={<PayrollSummaryResults />} />
@@ -18,7 +20,8 @@ function App() {
         <Route path="/employee-configuration" element={<EmployeeConfiguration />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    // </PayrollProvider>
   );
 }
 
