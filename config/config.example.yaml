@@ -1,0 +1,60 @@
+# Lumin Payroll Calculator Configuration
+# Copy this file to config.yaml and fill in your actual credentials
+
+azure:
+  account_url: "https://184891storagewus2.dfs.core.windows.net"
+  container_name: "reports"
+  sas_token: "YOUR_SAS_TOKEN_HERE"
+
+payroll:
+  # Pay period settings
+  pay_frequency: "biweekly"  # Every other Friday
+  pay_delay_days: 7  # Paid one week after end of pay period
+  
+  # Employee rates
+  hourly_rate: 14.00
+  senior_stylist_commission_rate: 0.40  # 40%
+  
+  # Discount split
+  discount_split_ratio: 0.50  # 50% of discount deducted from stylist
+
+employees:
+  senior_stylists:
+    - name: "Aubrie B."
+      employee_id: "aubrie_b"
+      pay_type: "commission_vs_hourly"
+      commission_rate: 0.40
+      hourly_rate: 14.00
+    - name: "Megan T."
+      employee_id: "megan_t"
+      pay_type: "commission_vs_hourly"
+      commission_rate: 0.40
+      hourly_rate: 14.00
+  
+  stylists:
+    - name: "Kennedi B"
+      employee_id: "kennedi_b"
+      pay_type: "hourly"
+      hourly_rate: 14.00
+    - name: "Stylist Chelese"
+      employee_id: "chelese"
+      pay_type: "hourly"
+      hourly_rate: 14.00
+  
+  front_desk:
+    - name: "Valerie C."
+      employee_id: "valerie_c"
+      pay_type: "hourly"
+      hourly_rate: 14.00
+    - name: "Erika Perez"
+      employee_id: "erika_p"
+      pay_type: "hourly"
+      hourly_rate: 14.00
+
+# Azure Blob Storage table names
+azure_tables:
+  transactions: "Transaction details/Transaction details.csv"
+  service_providers: "Service provider details/Service provider details.csv"
+  discounts: "Discount details/Discount details.csv"
+  refunds: "Refund details/Refund details.csv"
+
