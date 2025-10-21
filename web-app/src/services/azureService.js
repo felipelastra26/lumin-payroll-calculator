@@ -81,35 +81,22 @@ export async function getServiceProviders() {
  */
 export async function getTransactions(startDate, endDate) {
   try {
-    // Fetch from dated snapshot files
-    const transactions = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    // Try to fetch dated snapshots
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      const dateStr = date.toISOString().split('T')[0];
-      const filePath = `Transaction details/Transaction details-${dateStr}.csv`;
-      
-      try {
-        const data = await fetchCSVFromAzure(filePath);
-        transactions.push(...data);
-      } catch (error) {
-        console.warn(`No snapshot for ${dateStr}, skipping`);
-      }
-    }
-    
-    // If no dated snapshots, try main file
-    if (transactions.length === 0) {
-      const data = await fetchCSVFromAzure('Transaction details/Transaction details.csv');
-      transactions.push(...data);
-    }
+    // Always fetch from main file (most up-to-date)
+    const data = await fetchCSVFromAzure('Transaction details/Transaction details.csv');
     
     // Filter by date range
-    return transactions.filter(t => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Include entire end date
+    
+    const filtered = data.filter(t => {
+      if (!t.TransactionDate) return false;
       const transDate = new Date(t.TransactionDate);
       return transDate >= start && transDate <= end;
     });
+    
+    console.log(`Fetched ${filtered.length} transactions from ${startDate} to ${endDate}`);
+    return filtered;
   } catch (error) {
     console.error('Error fetching transactions:', error);
     return [];

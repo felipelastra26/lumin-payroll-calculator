@@ -79,20 +79,42 @@ function calculateWeeklyPay(employee, transactions, hours, payPeriod) {
   let services = [];
   
   // Calculate commission from transactions
-  if (commissionRate > 0) {
+  if (commissionRate > 0 && transactions.length > 0) {
     services = transactions.map(t => {
-      const commission = getServiceCommission(t.ItemSold, commissionRate);
-      const adding = hasAddings ? getServiceAdding(t.ItemSold) : 0;
+      // Calculate sale price from all payment types
+      const salePrice = parseFloat(t.CCAmount || 0) + 
+                       parseFloat(t.CashAmount || 0) + 
+                       parseFloat(t.CheckAmount || 0) + 
+                       parseFloat(t.ACHAmount || 0) + 
+                       parseFloat(t.VagaroPayLaterAmount || 0) + 
+                       parseFloat(t.OtherAmount || 0);
+      
+      // Get commission for this service
+      let commission = 0;
+      const serviceName = t.ItemSold || '';
+      
+      // Check if this is a member refill (shows $0 but has actual price)
+      if (salePrice === 0 && serviceName.toLowerCase().includes('refill')) {
+        // Use the actual service price for member refills
+        commission = getServiceCommission(serviceName, commissionRate);
+      } else {
+        // Regular commission calculation
+        commission = salePrice * (commissionRate / 100);
+      }
+      
+      const adding = hasAddings ? getServiceAdding(serviceName) : 0;
+      const tip = hasTips ? parseFloat(t.Tip || 0) : 0;
+      const discount = parseFloat(t.Discount || 0);
       
       return {
         date: t.TransactionDate,
         client: t.CustomerID || 'Unknown',
-        service: t.ItemSold,
-        sales: parseFloat(t.CCAmount || 0) + parseFloat(t.CashAmount || 0),
+        service: serviceName,
+        salePrice,
         commission,
         adding,
-        tip: hasTips ? parseFloat(t.Tip || 0) : 0,
-        discount: parseFloat(t.Discount || 0)
+        tip,
+        discount
       };
     });
     
@@ -130,6 +152,7 @@ function calculateWeeklyPay(employee, transactions, hours, payPeriod) {
       ? (basePay === hourlyPay ? 'hourly' : 'commission')
       : payStructure,
     services,
+    serviceCount: services.length,
     addings,
     tips,
     discountDeduction,
@@ -138,23 +161,37 @@ function calculateWeeklyPay(employee, transactions, hours, payPeriod) {
 }
 
 /**
- * Get employee hours from timecard data
+ * Get employee hours from manual entry or timecard data
  */
 function getEmployeeHours(employee, timecardData, payPeriod) {
-  if (!timecardData || !timecardData.employees) {
-    return {
-      week1: { hours: 0, days: [] },
-      week2: { hours: 0, days: [] }
-    };
+  // Try to get manual hours from sessionStorage first
+  const manualHoursStr = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('employeeHours') : null;
+  if (manualHoursStr) {
+    try {
+      const manualHours = JSON.parse(manualHoursStr);
+      if (manualHours[employee.id]) {
+        return {
+          week1: { hours: manualHours[employee.id].week1 || 0, days: [] },
+          week2: { hours: manualHours[employee.id].week2 || 0, days: [] }
+        };
+      }
+    } catch (e) {
+      console.error('Error parsing manual hours:', e);
+    }
   }
   
-  const { startDate, endDate } = payPeriod;
-  const midDate = new Date(startDate);
-  midDate.setDate(midDate.getDate() + 7);
+  // Fallback to timecard data if available
+  if (timecardData && timecardData.employees) {
+    const { startDate, endDate } = payPeriod;
+    const { getEmployeeHours: getHours } = require('./timecardParser');
+    return getHours(timecardData, employee.fullName || employee.name, new Date(startDate), new Date(endDate));
+  }
   
-  // Import the getEmployeeHours function from timecardParser
-  const { getEmployeeHours: getHours } = require('./timecardParser');
-  return getHours(timecardData, employee.fullName || employee.name, new Date(startDate), new Date(endDate));
+  // Default to zero hours
+  return {
+    week1: { hours: 0, days: [] },
+    week2: { hours: 0, days: [] }
+  };
 }
 
 // Re-export from timecardParser
